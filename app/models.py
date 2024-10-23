@@ -28,8 +28,8 @@ class UserPreferences(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     designTheme = db.Column(db.String(150), default='default')
-    designBackColor = db.Column(db.String(7), default='#6b4d38')
-    designSideBarColor = db.Column(db.String(7), default='#7d5b3b')
+    designBackColor = db.Column(db.String(7), default='#D3D3D3') #	1A202C is also nice
+    designSideBarColor = db.Column(db.String(7), default='#F4F4F4')
     timezone = db.Column(db.String(100), default='+08:00')
     enable_email_notif = db.Column(db.Boolean, default=False)
     enable_email_notif_reply = db.Column(db.Boolean, default=False)
