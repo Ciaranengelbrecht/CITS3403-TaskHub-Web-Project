@@ -6,6 +6,8 @@ from flask_wtf.csrf import generate_csrf  # Add this import
 from .models import User, Note, Board, Access, UserPreferences, Reply
 from .forms import LoginForm, RegisterForm, NoteForm
 from . import db, login_manager
+import os
+from flask import current_app
 
 app = Blueprint('app', __name__)
 
@@ -443,3 +445,19 @@ def add_reply(note_id):
 def get_replies(note_id):
     replies = Reply.query.filter_by(note_id=note_id).all()
     return jsonify([reply.to_dict() for reply in replies])
+
+# Add this temporary route - REMOVE AFTER USING ONCE
+@app.route('/admin/reset_db/<secret_key>')
+def reset_db(secret_key):
+    # Check if secret key matches to prevent unauthorized access
+    if secret_key != os.environ.get('ADMIN_SECRET', 'temporary_development_key'):
+        return "Unauthorized", 401
+    
+    try:
+        # Drop all tables and recreate them
+        db.drop_all()
+        db.create_all()
+        return "Database schema reset successfully. You can now register accounts."
+    except Exception as e:
+        current_app.logger.error(f"Database reset error: {e}")
+        return f"Error: {str(e)}", 500
