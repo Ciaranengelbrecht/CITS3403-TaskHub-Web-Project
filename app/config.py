@@ -5,9 +5,17 @@ from dotenv import load_dotenv
 load_dotenv()
 
 class Config:
-    SECRET_KEY = os.getenv('SECRET_KEY', 'default_secret_key')
-    SQLALCHEMY_DATABASE_URI = 'sqlite:///database.db'
+    # Get database URL from environment or use SQLite for local development
+    DATABASE_URL = os.environ.get('DATABASE_URL', 'sqlite:///app.db')
+    
+    # If the URL starts with postgres://, convert to postgresql://
+    # (SQLAlchemy requires postgresql://, but Supabase provides postgres://)
+    if DATABASE_URL.startswith('postgres://'):
+        DATABASE_URL = DATABASE_URL.replace('postgres://', 'postgresql://', 1)
+    
+    SQLALCHEMY_DATABASE_URI = DATABASE_URL
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+    SECRET_KEY = os.environ.get('SECRET_KEY', 'development-key')
     
     # Fix for CSRF issues in production
     SESSION_COOKIE_SECURE = True
