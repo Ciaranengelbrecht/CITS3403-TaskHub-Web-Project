@@ -35,7 +35,12 @@ def create_app(config_class=Config):
 
     @login_manager.user_loader
     def load_user(user_id):
-        return User.query.get(int(user_id))
+        try:
+            return User.query.get(int(user_id))
+        except Exception as e:
+            # Log the error but don't crash
+            current_app.logger.error(f"Error loading user: {e}")
+            return None
 
     from .routes import app as app_blueprint
     app.register_blueprint(app_blueprint)

@@ -8,6 +8,7 @@ from .forms import LoginForm, RegisterForm, NoteForm
 from . import db, login_manager
 import os
 from flask import current_app
+from sqlalchemy.exc import OperationalError, SQLAlchemyError
 
 app = Blueprint('app', __name__)
 
@@ -124,10 +125,30 @@ def register_user(form):
     return redirect(url_for('app.authentication'))
 
 @app.route('/logout')
+@login_required
 def logout():
-    logout_user()
-    flash('You have been logged out.', 'alert-success')
-    return redirect(url_for('app.authentication'))
+    try:
+        # Store a reference to whether user was logged in
+        was_logged_in = current_user.is_authenticated
+        
+        # Attempt to log the user out
+        logout_user()
+        
+        # Only flash a message if the user was actually logged in
+        if was_logged_in:
+            flash('You have been logged out.', 'success')
+        
+        return redirect(url_for('app.authentication'))
+    except (OperationalError, SQLAlchemyError) as e:
+        # Log the error
+        current_app.logger.error(f"Database error during logout: {e}")
+        
+        # Clear the session manually since logout_user() failed
+        session.clear()
+        
+        # Redirect to login page with a message
+        flash('You have been logged out. (Session cleared manually)', 'info')
+        return redirect(url_for('app.authentication'))
 
 @login_manager.unauthorized_handler
 def unauthorized():
