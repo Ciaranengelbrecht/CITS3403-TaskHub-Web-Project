@@ -2,6 +2,7 @@
 from flask import Blueprint, render_template, redirect, session, url_for, flash, request, jsonify, Response
 from flask_login import login_user, logout_user, login_required, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
+from flask_wtf.csrf import generate_csrf  # Add this import
 from .models import User, Note, Board, Access, UserPreferences, Reply
 from .forms import LoginForm, RegisterForm, NoteForm
 from . import db, login_manager
@@ -10,6 +11,9 @@ app = Blueprint('app', __name__)
 
 @app.route('/', methods=['GET', 'POST'])
 def authentication():
+    # Make session permanent to prevent premature expiration
+    session.permanent = True
+    
     # Force session initialization
     if 'csrf_token' not in session:
         session['csrf_token'] = generate_csrf()
