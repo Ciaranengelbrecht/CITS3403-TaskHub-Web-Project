@@ -7,7 +7,7 @@ from . import db
 class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(120), unique=True, nullable=False)
-    password = db.Column(db.String(120), nullable=False)
+    password = db.Column(db.String(500), nullable=False)  # Increase from 120 to 500
     preferences = db.relationship('UserPreferences', backref='user', uselist=False)
     notes = db.relationship('Note', backref='user', lazy=True)
     boards = db.relationship('Board', backref='owner', lazy=True)
