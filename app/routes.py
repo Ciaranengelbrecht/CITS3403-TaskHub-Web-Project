@@ -10,6 +10,12 @@ app = Blueprint('app', __name__)
 
 @app.route('/', methods=['GET', 'POST'])
 def authentication():
+    # Force session initialization
+    if 'csrf_token' not in session:
+        session['csrf_token'] = generate_csrf()
+        # Force the session to be saved
+        session.modified = True
+
     print("Form data:", request.form)  # Debug to show all form data received
     
     if current_user.is_authenticated:
