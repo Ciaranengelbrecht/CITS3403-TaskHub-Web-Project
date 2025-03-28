@@ -303,15 +303,15 @@ document.addEventListener("DOMContentLoaded", function () {
     const changesBar = document.getElementById(changesBarId);
 
     if (save) {
+      // Get CSRF token
+      const csrfToken = document
+        .querySelector('meta[name="csrf-token"]')
+        .getAttribute("content");
+
       // Get values to save
       const username = document.querySelector(".username").textContent;
       const lightDarkMode = document.getElementById("toggle-theme").checked;
       const noteColor = document.getElementById("note-colour-picker").value;
-
-      // Get CSRF token from meta tag
-      const csrfToken = document
-        .querySelector('meta[name="csrf-token"]')
-        .getAttribute("content");
 
       // Get profile picture if it exists
       let profilePicture = null;
@@ -324,22 +324,12 @@ document.addEventListener("DOMContentLoaded", function () {
         profilePicture = profileImg.src;
       }
 
-      // Log data before sending (for debugging)
-      console.log("Sending data:", {
-        username,
-        light_dark_mode: lightDarkMode,
-        note_colour: noteColor,
-        profile_picture: profilePicture
-          ? "Base64 data (length: " + profilePicture.length + ")"
-          : null,
-      });
-
       // Send the data to the server
       fetch("/update_preferences", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-CSRFToken": csrfToken, // Add CSRF token here
+          "X-CSRFToken": csrfToken, // Add this line
         },
         body: JSON.stringify({
           username: username,
@@ -349,9 +339,10 @@ document.addEventListener("DOMContentLoaded", function () {
         }),
       })
         .then((response) => {
+          // First check if response is ok
           if (!response.ok) {
             return response.text().then((text) => {
-              throw new Error(`Server returned ${response.status}: ${text}`);
+              throw new Error(`Server error: ${response.status} - ${text}`);
             });
           }
           return response.json();
@@ -372,7 +363,6 @@ document.addEventListener("DOMContentLoaded", function () {
     } else {
       // Revert changes
       changesBar.classList.remove("visible");
-      // Your revert code...
     }
   }
 
