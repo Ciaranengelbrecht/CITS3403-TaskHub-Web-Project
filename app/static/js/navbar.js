@@ -1,9 +1,8 @@
 // Function to toggle the visibility of pop-ups
 function togglePopUp(popUpId, isOpen) {
-
   const popUp = document.querySelector(popUpId);
   const overlay = document.querySelector(".overlay");
-  
+
   if (isOpen) {
     overlay.style.display = "block";
     setTimeout(() => {
@@ -25,12 +24,12 @@ function initializeSettingsTabs() {
   const tabContents = document.querySelectorAll(".settings-tab-content");
 
   tabs.forEach((tab, index) => {
-    tab.addEventListener("click", function() {
-      tabs.forEach(t => t.classList.remove("active"));
-      tabContents.forEach(c => c.style.display = 'none');
+    tab.addEventListener("click", function () {
+      tabs.forEach((t) => t.classList.remove("active"));
+      tabContents.forEach((c) => (c.style.display = "none"));
 
       tab.classList.add("active");
-      tabContents[index].style.display = 'block';
+      tabContents[index].style.display = "block";
     });
   });
 
@@ -43,85 +42,99 @@ function initializeSettingsTabs() {
 // Function to save preferences to file
 function savePreferences(csrfToken) {
   const preferences = {
-    designTheme: document.getElementById('theme-selection').value,
-    designBackColor: document.getElementById('back-color-selection').value,
-    designSideBarColor: document.getElementById('panel-color-selection').value,
-    timezone: document.getElementById('timezone-selection').value,
-    enableEmailNotif: document.getElementById('toggle-notif').checked,
-    enableEmailNotifReply: document.getElementById('toggle-notif-reply').checked,
-    enableEmailNotifBoard: document.getElementById('toggle-notif-all-board').checked,
-    enableEmailNotifOwn: document.getElementById('toggle-notif-all-own').checked,
-    enableEmailNotifStar: document.getElementById('toggle-notif-all-star').checked,
-    privacy: document.getElementById('privacy-visibility').value,
-    profilePicture: document.getElementById('profile-picture').src,
-    username: document.getElementById('username').textContent,
-    lightDarkMode: document.getElementById('toggle-theme').checked,
-    noteColour: document.getElementById('note-colour-picker').value,
+    designTheme: document.getElementById("theme-selection").value,
+    designBackColor: document.getElementById("back-color-selection").value,
+    designSideBarColor: document.getElementById("panel-color-selection").value,
+    timezone: document.getElementById("timezone-selection").value,
+    enableEmailNotif: document.getElementById("toggle-notif").checked,
+    enableEmailNotifReply:
+      document.getElementById("toggle-notif-reply").checked,
+    enableEmailNotifBoard: document.getElementById("toggle-notif-all-board")
+      .checked,
+    enableEmailNotifOwn: document.getElementById("toggle-notif-all-own")
+      .checked,
+    enableEmailNotifStar: document.getElementById("toggle-notif-all-star")
+      .checked,
+    privacy: document.getElementById("privacy-visibility").value,
+    profilePicture: document.getElementById("profile-picture").src,
+    username: document.getElementById("username").textContent,
+    lightDarkMode: document.getElementById("toggle-theme").checked,
+    noteColour: document.getElementById("note-colour-picker").value,
   };
 
-  console.log('Saving preferences:', preferences); // Debugging
+  console.log("Saving preferences:", preferences); // Debugging
 
-  fetch('/save_preferences', {
-    method: 'POST',
+  fetch("/save_preferences", {
+    method: "POST",
     headers: {
-      'Content-Type': 'application/json',
-      'X-CSRFToken': csrfToken // Include CSRF token in the headers
+      "Content-Type": "application/json",
+      "X-CSRFToken": csrfToken, // Include CSRF token in the headers
     },
     body: JSON.stringify(preferences),
   })
-  .then(response => {
-    if (!response.ok) {
-      throw new Error('Network response was not ok ' + response.statusText);
-    }
-    return response.json();
-  })
-  .then(data => {
-    console.log('Success:', data);
-  })
-  .catch((error) => {
-    console.error('Error:', error);
-  });
+    .then((response) => {
+      if (!response.ok) {
+        throw new Error("Network response was not ok " + response.statusText);
+      }
+      return response.json();
+    })
+    .then((data) => {
+      console.log("Success:", data);
+    })
+    .catch((error) => {
+      console.error("Error:", error);
+    });
 }
 
 // Function to load preferences from file
 function loadPreferences() {
-  fetch('/get_preferences')
-  .then(response => response.json())
-  .then(data => {
-    if (data) {
-      document.getElementById('theme-selection').value = data.designTheme;
-      document.getElementById('back-color-selection').value = data.designBackColor;
-      document.body.style.backgroundColor = data.designBackColor; // Load to background
-      document.getElementById('panel-color-selection').value = data.designSideBarColor;
-      document.getElementById("side-navbar").style.backgroundColor = data.designSideBarColor; // Load to side navbar
-      document.getElementById('timezone-selection').value = data.timezone;
-      document.getElementById('toggle-notif').checked = data.enableEmailNotif;
-      document.getElementById('toggle-notif-reply').checked = data.enableEmailNotifReply;
-      document.getElementById('toggle-notif-all-board').checked = data.enableEmailNotifBoard;
-      document.getElementById('toggle-notif-all-own').checked = data.enableEmailNotifOwn;
-      document.getElementById('toggle-notif-all-star').checked = data.enableEmailNotifStar;
-      document.getElementById('privacy-visibility').value = data.privacy;
-      document.getElementById('profile-picture').src = data.profilePicture;
-      document.getElementById('note-sample-profile-picture').src = data.profilePicture; // Load to example note
-      document.getElementById('username').textContent = data.username;
-      document.getElementById('note-sample-user-name').textContent = data.username; // Load to example note
-      document.getElementById('toggle-theme').checked = data.lightDarkMode;
-      document.getElementById('note-colour-picker').value = data.noteColour;
-      document.getElementById('note-sample').style.backgroundColor = data.noteColour; // Update note sample color
+  fetch("/get_preferences")
+    .then((response) => response.json())
+    .then((data) => {
+      if (data) {
+        document.getElementById("theme-selection").value = data.designTheme;
+        document.getElementById("back-color-selection").value =
+          data.designBackColor;
+        document.body.style.backgroundColor = data.designBackColor; // Load to background
+        document.getElementById("panel-color-selection").value =
+          data.designSideBarColor;
+        document.getElementById("side-navbar").style.backgroundColor =
+          data.designSideBarColor; // Load to side navbar
+        document.getElementById("timezone-selection").value = data.timezone;
+        document.getElementById("toggle-notif").checked = data.enableEmailNotif;
+        document.getElementById("toggle-notif-reply").checked =
+          data.enableEmailNotifReply;
+        document.getElementById("toggle-notif-all-board").checked =
+          data.enableEmailNotifBoard;
+        document.getElementById("toggle-notif-all-own").checked =
+          data.enableEmailNotifOwn;
+        document.getElementById("toggle-notif-all-star").checked =
+          data.enableEmailNotifStar;
+        document.getElementById("privacy-visibility").value = data.privacy;
+        document.getElementById("profile-picture").src = data.profilePicture;
+        document.getElementById("note-sample-profile-picture").src =
+          data.profilePicture; // Load to example note
+        document.getElementById("username").textContent = data.username;
+        document.getElementById("note-sample-user-name").textContent =
+          data.username; // Load to example note
+        document.getElementById("toggle-theme").checked = data.lightDarkMode;
+        document.getElementById("note-colour-picker").value = data.noteColour;
+        document.getElementById("note-sample").style.backgroundColor =
+          data.noteColour; // Update note sample color
 
-      // Toggle Light/Dark mode
-      if (data.lightDarkMode) {
-        document.body.classList.add('dark-mode');
-        localStorage.setItem('theme', 'dark-mode');
-      } else {
-        document.body.classList.remove('dark-mode');
-        localStorage.setItem('theme', 'light-mode');
+        // Toggle Light/Dark mode
+        if (data.lightDarkMode) {
+          document.body.classList.add("dark-mode");
+          localStorage.setItem("theme", "dark-mode");
+        } else {
+          document.body.classList.remove("dark-mode");
+          localStorage.setItem("theme", "light-mode");
+        }
       }
-    }
-  })
-  .catch((error) => {
-      console.error('Error:', error);
-  });
+    })
+    .catch((error) => {
+      console.error("Error:", error);
+    });
 }
 
 // Load preferences when the page loads
@@ -138,11 +151,11 @@ document.addEventListener("DOMContentLoaded", function () {
   const buttons = {
     "profile-button": ".profile-pop-up",
     "about-button": ".about-pop-up",
-    "settings-button": ".settings-pop-up"
+    "settings-button": ".settings-pop-up",
   };
 
   // Initialize listeners for each button
-  Object.keys(buttons).forEach(btnId => {
+  Object.keys(buttons).forEach((btnId) => {
     const button = document.getElementById(btnId);
     const popUpId = buttons[btnId];
 
@@ -152,9 +165,11 @@ document.addEventListener("DOMContentLoaded", function () {
   // Close Buttons
   const closeButtons = document.querySelectorAll(".close-button");
 
-  closeButtons.forEach(button => {
-    button.addEventListener("click", function() {
-      const popUp = button.closest('.settings-pop-up, .profile-pop-up, .about-pop-up');
+  closeButtons.forEach((button) => {
+    button.addEventListener("click", function () {
+      const popUp = button.closest(
+        ".settings-pop-up, .profile-pop-up, .about-pop-up"
+      );
       if (popUp) {
         togglePopUp(`#${popUp.id}`, false);
         // Case for profile pop-up for editing
@@ -163,65 +178,68 @@ document.addEventListener("DOMContentLoaded", function () {
         }
       }
       exitEditMode();
-      saveChanges('profile-unsaved-changes-bar', false)
-      saveChanges('settings-unsaved-changes-bar', false)
+      saveChanges("profile-unsaved-changes-bar", false);
+      saveChanges("settings-unsaved-changes-bar", false);
     });
   });
 
   // Overlay and Escape key listeners
   const overlay = document.querySelector(".overlay");
-  overlay.addEventListener("click", function() {
-    if (!isEditingUsername && !changesMade) { // Only close pop-ups if not editing username and no changes have been made
-      document.querySelectorAll('.display-pop-up').forEach(popUp => {
+  overlay.addEventListener("click", function () {
+    if (!isEditingUsername && !changesMade) {
+      // Only close pop-ups if not editing username and no changes have been made
+      document.querySelectorAll(".display-pop-up").forEach((popUp) => {
         togglePopUp(`#${popUp.id}`, false);
       });
-      saveChanges('profile-unsaved-changes-bar', false)
-      saveChanges('settings-unsaved-changes-bar', false)
+      saveChanges("profile-unsaved-changes-bar", false);
+      saveChanges("settings-unsaved-changes-bar", false);
     }
   });
 
-  document.addEventListener("keydown", function(event) {
+  document.addEventListener("keydown", function (event) {
     if (event.key === "Escape") {
-      document.querySelectorAll('.display-pop-up').forEach(popUp => {
+      document.querySelectorAll(".display-pop-up").forEach((popUp) => {
         togglePopUp(`#${popUp.id}`, false);
       });
       exitEditMode();
-      saveChanges('profile-unsaved-changes-bar', false)
-      saveChanges('settings-unsaved-changes-bar', false)
+      saveChanges("profile-unsaved-changes-bar", false);
+      saveChanges("settings-unsaved-changes-bar", false);
     }
   });
 
-  const usernameContainer = document.querySelector('.username-container');
-  const username = document.querySelector('.username');
-  const editIcon = document.querySelector('.username-edit-icon');
-  const editInput = document.querySelector('.username-edit');
+  const usernameContainer = document.querySelector(".username-container");
+  const username = document.querySelector(".username");
+  const editIcon = document.querySelector(".username-edit-icon");
+  const editInput = document.querySelector(".username-edit");
 
-  usernameContainer.addEventListener('click', function() {
+  usernameContainer.addEventListener("click", function () {
     if (!isEditingUsername) {
       enterEditMode();
     }
   });
 
-  editInput.addEventListener('keydown', function(e) {
-    if (e.key === 'Enter') {
+  editInput.addEventListener("keydown", function (e) {
+    if (e.key === "Enter") {
       username.textContent = editInput.value;
-      document.getElementById('note-sample-user-name').textContent = editInput.value; // Load to example note
+      document.getElementById("note-sample-user-name").textContent =
+        editInput.value; // Load to example note
       exitEditMode();
-    } else if (e.key === 'Escape') {
+    } else if (e.key === "Escape") {
       exitEditMode();
     }
   });
 
   // Save changes when the input loses focus
-  editInput.addEventListener('blur', function() {
+  editInput.addEventListener("blur", function () {
     username.textContent = editInput.value;
-    document.getElementById('note-sample-user-name').textContent = editInput.value; // Load to example note
+    document.getElementById("note-sample-user-name").textContent =
+      editInput.value; // Load to example note
     exitEditMode();
   });
 
   function enterEditMode() {
-    editInput.style.display = 'block';
-    username.style.display = 'none';
+    editInput.style.display = "block";
+    username.style.display = "none";
     editIcon.style.opacity = 0;
     editInput.value = username.textContent;
     editInput.focus();
@@ -230,124 +248,212 @@ document.addEventListener("DOMContentLoaded", function () {
 
   // Function to exit Edit Mode for username
   function exitEditMode() {
-    editInput.style.display = 'none';
-    username.style.display = 'block';
-    editIcon.style.opacity = '';
+    editInput.style.display = "none";
+    username.style.display = "block";
+    editIcon.style.opacity = "";
     isEditingUsername = false;
   }
 
   // Color Picker
-  const colorPicker = document.getElementById('note-colour-picker');
-  const noteSample = document.getElementById('note-sample');
+  const colorPicker = document.getElementById("note-colour-picker");
+  const noteSample = document.getElementById("note-sample");
 
-  colorPicker.addEventListener('input', function() {
+  colorPicker.addEventListener("input", function () {
     noteSample.style.backgroundColor = this.value; // Update note sample color
   });
 
   // Unsaved Changes Bar
-  const profileInputs = document.querySelectorAll('.profile-pop-up input, .profile-pop-up select');
-  const settingsInputs = document.querySelectorAll('.settings-pop-up input, .settings-pop-up select');
-  
-  const profileUnsavedChangesBar = document.querySelector('.unsaved-changes-bar#profile-unsaved-changes-bar');
-  const settingsUnsavedChangesBar = document.querySelector('.unsaved-changes-bar#settings-unsaved-changes-bar');
+  const profileInputs = document.querySelectorAll(
+    ".profile-pop-up input, .profile-pop-up select"
+  );
+  const settingsInputs = document.querySelectorAll(
+    ".settings-pop-up input, .settings-pop-up select"
+  );
+
+  const profileUnsavedChangesBar = document.querySelector(
+    ".unsaved-changes-bar#profile-unsaved-changes-bar"
+  );
+  const settingsUnsavedChangesBar = document.querySelector(
+    ".unsaved-changes-bar#settings-unsaved-changes-bar"
+  );
 
   // Get CSRF token from meta tag
-  const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+  const csrfToken = document
+    .querySelector('meta[name="csrf-token"]')
+    .getAttribute("content");
 
   //Detects any changes within the profile
-  profileInputs.forEach(input => {
-    input.addEventListener('change', function() {
-      profileUnsavedChangesBar.classList.add('display');
+  profileInputs.forEach((input) => {
+    input.addEventListener("change", function () {
+      profileUnsavedChangesBar.classList.add("display");
       changesMade = true;
-    }); 
+    });
   });
 
   //Detects any changes within the settings
-  settingsInputs.forEach(input => {
-    input.addEventListener('change', function() {
-      settingsUnsavedChangesBar.classList.add('display');
+  settingsInputs.forEach((input) => {
+    input.addEventListener("change", function () {
+      settingsUnsavedChangesBar.classList.add("display");
       changesMade = true;
-    }); 
+    });
   });
-  
+
   // Function to revert or save changes
-  function saveChanges(barID, save) {
-    const unsavedChangesBar = document.getElementById(barID);
-    changesMade = false;
+  function saveChanges(changesBarId, save) {
+    const changesBar = document.getElementById(changesBarId);
+
     if (save) {
-      unsavedChangesBar.classList.remove('display');
-      savePreferences(csrfToken)
+      // Get values to save
+      const username = document.querySelector(".username").textContent;
+      const lightDarkMode = document.getElementById("toggle-theme").checked;
+      const noteColor = document.getElementById("note-colour-picker").value;
+
+      // Get profile picture if it exists
+      let profilePicture = null;
+      const profileImg = document.getElementById("profile-picture");
+      if (
+        profileImg &&
+        profileImg.src &&
+        !profileImg.src.endsWith("default-avatar.jpg")
+      ) {
+        // Convert image to base64 if it's not the default image
+        profilePicture = profileImg.src;
+      }
+
+      // Send the data to the server
+      fetch("/update_preferences", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          username: username,
+          light_dark_mode: lightDarkMode,
+          note_colour: noteColor,
+          profile_picture: profilePicture,
+        }),
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          if (data.success) {
+            changesBar.classList.remove("visible");
+            // Show success message
+            alert("Profile updated successfully!");
+          } else {
+            alert("Failed to update profile: " + data.message);
+          }
+        })
+        .catch((error) => {
+          console.error("Error saving profile:", error);
+          alert("Failed to update profile. Please try again.");
+        });
     } else {
-      unsavedChangesBar.classList.remove('display');
-      loadPreferences()
+      // Revert changes
+      changesBar.classList.remove("visible");
+      // Reset profile picture if needed
+      if (changesBarId === "profile-unsaved-changes-bar") {
+        // Load current profile from server (optional)
+        fetch("/get_preferences")
+          .then((response) => response.json())
+          .then((data) => {
+            if (data.profile_picture) {
+              document.getElementById("profile-picture").src =
+                data.profile_picture;
+            } else {
+              document.getElementById("profile-picture").src =
+                "/static/images/default-avatar.jpg";
+            }
+          });
+      }
     }
   }
-  
+
   // Save or Revert Changes
-  document.getElementById('profile-save-changes').addEventListener('click', () => saveChanges('profile-unsaved-changes-bar', true));
-  document.getElementById('profile-revert-changes').addEventListener('click', () => saveChanges('profile-unsaved-changes-bar', false));
-  document.getElementById('settings-save-changes').addEventListener('click', () => saveChanges('settings-unsaved-changes-bar', true));
-  document.getElementById('settings-revert-changes').addEventListener('click', () => saveChanges('settings-unsaved-changes-bar', false));
+  document
+    .getElementById("profile-save-changes")
+    .addEventListener("click", () =>
+      saveChanges("profile-unsaved-changes-bar", true)
+    );
+  document
+    .getElementById("profile-revert-changes")
+    .addEventListener("click", () =>
+      saveChanges("profile-unsaved-changes-bar", false)
+    );
+  document
+    .getElementById("settings-save-changes")
+    .addEventListener("click", () =>
+      saveChanges("settings-unsaved-changes-bar", true)
+    );
+  document
+    .getElementById("settings-revert-changes")
+    .addEventListener("click", () =>
+      saveChanges("settings-unsaved-changes-bar", false)
+    );
 });
 
 // File Upload
-document.addEventListener('DOMContentLoaded', function() {
-  const profileContainer = document.querySelector('.profile-picture-container');
-  const fileInput = document.getElementById('profile-picture-input');
-  const profileImage = document.querySelector('.profile-picture');
+document.addEventListener("DOMContentLoaded", function () {
+  const profileContainer = document.querySelector(".profile-picture-container");
+  const fileInput = document.getElementById("profile-picture-input");
+  const profileImage = document.querySelector(".profile-picture");
 
-  profileContainer.addEventListener('click', function() {
+  profileContainer.addEventListener("click", function () {
     fileInput.click();
   });
 
   //Detects any changes within the settings
-  fileInput.addEventListener('change', function() {
+  fileInput.addEventListener("change", function () {
     const file = this.files[0];
     if (file) {
       // Check the file size (< 100 KB) and type (image)
-      if (file.size < 102400 && file.type.startsWith('image/')) {
+      if (file.size < 102400 && file.type.startsWith("image/")) {
         const reader = new FileReader();
-        reader.onload = function(e) {
+        reader.onload = function (e) {
           const img = new Image();
-          img.onload = function() {
+          img.onload = function () {
             // Check the dimensions are at least 40px by 40px
             if (img.width >= 40 && img.height >= 40) {
               profileImage.src = e.target.result; // Update the image src
             } else {
-              alert('Image dimensions are too small. Minimum size is 40x40 pixels.');
+              alert(
+                "Image dimensions are too small. Minimum size is 40x40 pixels."
+              );
             }
           };
           img.src = e.target.result;
-          document.getElementById('note-sample-profile-picture').src = e.target.result; // Load to example note
+          document.getElementById("note-sample-profile-picture").src =
+            e.target.result; // Load to example note
         };
         reader.readAsDataURL(file);
-    } else {
-        alert('File is too large or not an image. Please select an image less than 100kb.');
+      } else {
+        alert(
+          "File is too large or not an image. Please select an image less than 100kb."
+        );
       }
     }
   });
 
-  const toggleThemeCheckbox = document.getElementById('toggle-theme');
+  const toggleThemeCheckbox = document.getElementById("toggle-theme");
 
   // Load theme from localStorage
-  const currentTheme = localStorage.getItem('theme');
+  const currentTheme = localStorage.getItem("theme");
   if (currentTheme) {
     document.body.classList.add(currentTheme);
-    toggleThemeCheckbox.checked = currentTheme === 'dark-mode';
+    toggleThemeCheckbox.checked = currentTheme === "dark-mode";
   }
 
   // Toggle theme
-  toggleThemeCheckbox.addEventListener('change', function() {
+  toggleThemeCheckbox.addEventListener("change", function () {
     if (toggleThemeCheckbox.checked) {
-      document.body.classList.add('dark-mode');
-      localStorage.setItem('theme', 'dark-mode');
+      document.body.classList.add("dark-mode");
+      localStorage.setItem("theme", "dark-mode");
     } else {
-      document.body.classList.remove('dark-mode');
-      localStorage.setItem('theme', 'light-mode');
+      document.body.classList.remove("dark-mode");
+      localStorage.setItem("theme", "light-mode");
     }
   });
 
-    // Side navbar
+  // Side navbar
   const openSidebarButton = document.getElementById(
     "boards-sidebar-arrow-button"
   );
@@ -394,7 +500,6 @@ document.addEventListener('DOMContentLoaded', function() {
     window.addEventListener("mousemove", resizeNavbar);
     window.addEventListener("mouseup", stopResizeNavbar);
   }
-
 });
 
 document.addEventListener("DOMContentLoaded", function () {
@@ -406,6 +511,7 @@ document.addEventListener("DOMContentLoaded", function () {
   });
 
   panelColorPicker.addEventListener("input", function () {
-    document.getElementById("side-navbar").style.backgroundColor = panelColorPicker.value;
+    document.getElementById("side-navbar").style.backgroundColor =
+      panelColorPicker.value;
   });
 });

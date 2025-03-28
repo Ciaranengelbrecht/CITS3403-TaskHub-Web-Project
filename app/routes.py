@@ -482,3 +482,40 @@ def reset_db(secret_key):
     except Exception as e:
         current_app.logger.error(f"Database reset error: {e}")
         return f"Error: {str(e)}", 500
+
+@app.route('/update_preferences', methods=['POST'])
+@login_required
+def update_preferences():
+    try:
+        data = request.get_json()
+        
+        # Get the current user's preferences
+        user_prefs = current_user.preferences
+        if not user_prefs:
+            # Create preferences if they don't exist
+            user_prefs = UserPreferences(user_id=current_user.id)
+            db.session.add(user_prefs)
+        
+        # Update fields from the request
+        if 'username' in data:
+            user_prefs.username = data['username']
+        
+        if 'light_dark_mode' in data:
+            user_prefs.light_dark_mode = data['light_dark_mode']
+            
+        if 'note_colour' in data:
+            user_prefs.note_colour = data['note_colour']
+            
+        # Handle profile picture (base64 encoded image)
+        if 'profile_picture' in data and data['profile_picture']:
+            # Make sure it's a valid data URL
+            if data['profile_picture'].startswith('data:image'):
+                user_prefs.profile_picture = data['profile_picture']
+        
+        # Save changes
+        db.session.commit()
+        return jsonify({'success': True})
+    except Exception as e:
+        db.session.rollback()
+        app.logger.error(f"Error updating preferences: {str(e)}")
+        return jsonify({'success': False, 'message': str(e)}), 500
