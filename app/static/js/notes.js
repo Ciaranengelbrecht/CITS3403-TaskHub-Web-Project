@@ -2,16 +2,16 @@ let userPreferences = {};
 
 // Fetch user preferences
 function fetchUserPreferences() {
-  fetch('/get_preferences')
-    .then(response => response.json())
-    .then(data => {
+  fetch("/get_preferences")
+    .then((response) => response.json())
+    .then((data) => {
       userPreferences = data;
     })
-    .catch(error => console.error('Error fetching user preferences:', error));
+    .catch((error) => console.error("Error fetching user preferences:", error));
 }
 
 // Call this function when the DOM is fully loaded
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener("DOMContentLoaded", function () {
   fetchUserPreferences();
 });
 
@@ -46,7 +46,10 @@ function createStickyNote() {
   colorPicker.value = userPreferences.noteColour || "#ffffff";
   colorPicker.classList.add("note-color-picker");
 
-  colorPicker.addEventListener("input", () => (note.style.backgroundColor = colorPicker.value));
+  colorPicker.addEventListener(
+    "input",
+    () => (note.style.backgroundColor = colorPicker.value)
+  );
   colorPickerForm.appendChild(colorPicker);
 
   headerBackground.appendChild(profileImage);
@@ -80,7 +83,6 @@ function createStickyNote() {
   board.appendChild(note);
 }
 
-
 function saveNote(content, color, noteElement) {
   const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
 
@@ -98,14 +100,19 @@ function saveNote(content, color, noteElement) {
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-      return response.text(); 
+      return response.text();
     })
     .then((text) => {
       try {
-        const data = JSON.parse(text); 
+        const data = JSON.parse(text);
         console.log("Note saved", data);
-        noteElement.dataset.id = data.id; 
-        saveNotePositionAndSize(noteElement)
+
+        // Save the position first
+        noteElement.dataset.id = data.id;
+        saveNotePositionAndSize(noteElement);
+
+        // Fetch the complete note from server and replace the current one
+        fetchAndReplaceNote(data.id, noteElement);
       } catch (e) {
         console.error("Error parsing JSON:", e);
         console.error("Received text:", text);
@@ -114,6 +121,155 @@ function saveNote(content, color, noteElement) {
     .catch((error) => {
       console.error("Error in fetch operation:", error);
     });
+}
+
+// New function to fetch and replace a note with a fully rendered version
+function fetchAndReplaceNote(noteId, currentElement) {
+  fetch(`/notes/${noteId}`)
+    .then((response) => {
+      if (!response.ok) {
+        throw new Error("Failed to fetch complete note");
+      }
+      return response.json();
+    })
+    .then((note) => {
+      // Create fully-featured note element
+      const newNoteElement = createCompleteNoteElement(note);
+
+      // Replace the current element with the new one
+      if (currentElement && currentElement.parentNode) {
+        currentElement.parentNode.replaceChild(newNoteElement, currentElement);
+      }
+    })
+    .catch((error) => {
+      console.error("Error fetching complete note:", error);
+    });
+}
+
+// New function to create a fully featured note element
+function createCompleteNoteElement(note) {
+  // Start with the basic note element
+  const noteElement = document.createElement("div");
+  noteElement.classList.add("sticky-note");
+  noteElement.id = `note${note.id}`;
+  noteElement.dataset.id = note.id;
+  noteElement.style.backgroundColor = note.color || "#ffffff";
+  noteElement.style.left = `${note.position_x || 100}px`;
+  noteElement.style.top = `${note.position_y || 100}px`;
+  noteElement.style.width = `${note.width || 250}px`;
+  noteElement.style.height = `${note.height || 200}px`;
+
+  // Create header with profile picture, username, etc.
+  const noteHeader = document.createElement("div");
+  noteHeader.classList.add("sticky-note-header");
+
+  const headerBackground = document.createElement("div");
+  headerBackground.classList.add("sticky-note-header-background");
+
+  const profileImage = document.createElement("img");
+  profileImage.src = note.user_photo || "/static/images/default-avatar.jpg";
+  profileImage.alt = "Profile Photo";
+  profileImage.classList.add("sticky-note-profile-picture");
+
+  const nameSpan = document.createElement("span");
+  nameSpan.classList.add("sticky-note-user-name");
+  nameSpan.innerHTML = `<b>${note.user_name || "User"}</b>`;
+
+  // Add color picker
+  const colorPickerForm = document.createElement("form");
+  colorPickerForm.classList.add("color-picker-form");
+  const colorPicker = document.createElement("input");
+  colorPicker.type = "color";
+  colorPicker.value = note.color || "#ffffff";
+  colorPicker.classList.add("note-color-picker");
+
+  // Add color change event listener
+  colorPicker.addEventListener("input", function () {
+    const noteElement = this.closest(".sticky-note");
+    const noteId = noteElement.dataset.id;
+    const newColor = this.value;
+    noteElement.style.backgroundColor = newColor;
+    updateNoteColor(noteId, newColor);
+  });
+
+  colorPickerForm.appendChild(colorPicker);
+
+  // Assemble header
+  headerBackground.appendChild(profileImage);
+  headerBackground.appendChild(nameSpan);
+  headerBackground.appendChild(colorPickerForm);
+  noteHeader.appendChild(headerBackground);
+
+  // Create content area
+  const noteContent = document.createElement("div");
+  noteContent.classList.add("sticky-note-content");
+  noteContent.setAttribute("contenteditable", "true");
+  noteContent.textContent = note.content || "";
+
+  // Add content update handling
+  noteContent.addEventListener("keypress", function (e) {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      const noteElement = this.closest(".sticky-note");
+      const noteId = noteElement.dataset.id;
+      const updatedContent = this.textContent;
+      const updatedColor = noteElement.style.backgroundColor;
+
+      updateNoteDetails(noteId, {
+        content: updatedContent,
+        color: updatedColor,
+      });
+      this.blur();
+    }
+  });
+
+  // Create footer with timestamp
+  const noteFooter = document.createElement("div");
+  noteFooter.classList.add("note-footer");
+  noteFooter.textContent = new Date(
+    note.created_at || Date.now()
+  ).toLocaleString();
+
+  // Create replies section
+  const repliesSection = document.createElement("div");
+  repliesSection.classList.add("replies-section");
+
+  const repliesContainer = document.createElement("div");
+  repliesContainer.classList.add("replies-container");
+
+  const replyForm = document.createElement("div");
+  replyForm.classList.add("reply-form");
+
+  const replyInput = document.createElement("input");
+  replyInput.type = "text";
+  replyInput.classList.add("reply-input");
+  replyInput.placeholder = "Add a reply...";
+
+  const replyButton = document.createElement("button");
+  replyButton.classList.add("reply-button");
+  replyButton.textContent = "Reply";
+  replyButton.onclick = function () {
+    addReply(this, note.id);
+  };
+
+  replyForm.appendChild(replyInput);
+  replyForm.appendChild(replyButton);
+
+  repliesSection.appendChild(repliesContainer);
+  repliesSection.appendChild(replyForm);
+
+  // Assemble note
+  noteElement.appendChild(noteHeader);
+  noteElement.appendChild(noteContent);
+  noteElement.appendChild(noteFooter);
+  noteElement.appendChild(repliesSection);
+
+  // Make note draggable
+  noteElement.addEventListener("mousedown", function (e) {
+    // Implement dragging logic if needed
+  });
+
+  return noteElement;
 }
 
 function createFooterWithTimestamp(timestamp) {
@@ -175,7 +331,7 @@ document.addEventListener("DOMContentLoaded", function () {
     .forEach((contentElement) => {
       contentElement.addEventListener("keypress", function (e) {
         if (e.key === "Enter" && !e.shiftKey) {
-          e.preventDefault(); 
+          e.preventDefault();
           const noteElement = this.closest(".sticky-note");
           const noteId = noteElement.dataset.id;
           const updatedContent = this.textContent;
@@ -185,7 +341,7 @@ document.addEventListener("DOMContentLoaded", function () {
             content: updatedContent,
             color: updatedColor,
           });
-          this.blur(); 
+          this.blur();
         }
       });
     });
@@ -242,7 +398,6 @@ function updateNoteColor(noteId, newColor) {
       console.error("Error updating color:", error);
     });
 }
-
 
 // Function to add a reply to a sticky note
 function addReply(note, replyText) {
@@ -597,9 +752,9 @@ function createNoteElement(note) {
 }
 
 document.addEventListener("DOMContentLoaded", function () {
-  const noteFooters = document.querySelectorAll('.note-footer');
-  noteFooters.forEach(footer => {
-    const createdAt = footer.getAttribute('data-created-at');
+  const noteFooters = document.querySelectorAll(".note-footer");
+  noteFooters.forEach((footer) => {
+    const createdAt = footer.getAttribute("data-created-at");
     if (createdAt) {
       const date = new Date(createdAt);
       footer.textContent = date.toLocaleString();
@@ -608,14 +763,14 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 
 function fetchNotesForBoard(boardId) {
-  console.log("Fetching notes for board ID:", boardId); // Debug 
+  console.log("Fetching notes for board ID:", boardId); // Debug
 
   fetch(`/notes/get_by_board/${boardId}`)
     .then((response) => response.json())
     .then((notes) => {
       const boardElement = document.getElementById("board");
       boardElement.innerHTML = ""; // Clear existing notes
-      console.log("Fetched notes:", notes); // Debug 
+      console.log("Fetched notes:", notes); // Debug
       notes.forEach((note) => {
         const noteElement = createNoteElement(note);
         boardElement.appendChild(noteElement);
@@ -624,9 +779,8 @@ function fetchNotesForBoard(boardId) {
     .catch((error) => console.error("Error loading notes:", error));
 }
 
-
 function switchBoard(boardId) {
-  console.log("Attempting to switch to board:", boardId); // Debug 
+  console.log("Attempting to switch to board:", boardId); // Debug
 
   fetch(`/boards/switch/${boardId}`, {
     method: "POST",
@@ -637,17 +791,15 @@ function switchBoard(boardId) {
     .then((response) => response.json())
     .then((data) => {
       if (data.success) {
-        console.log("Switched to board:", boardId); // Debug 
+        console.log("Switched to board:", boardId); // Debug
         fetchNotesForBoard(boardId);
         window.location.reload();
-
       } else {
         console.error("Failed to switch board:", data.message);
       }
     })
     .catch((error) => console.error("Error switching board:", error));
 }
-
 
 document
   .getElementById("create-board-form")
@@ -670,7 +822,7 @@ document
       .then((response) => response.json())
       .then((data) => {
         if (data.success) {
-          updateBoardList(); 
+          updateBoardList();
           alert("Board created successfully!");
           switchBoard(data.board_id);
         } else {
@@ -685,7 +837,7 @@ function updateBoardList() {
     .then((response) => response.json())
     .then((data) => {
       const boardsContainer = document.getElementById("boards-container");
-      boardsContainer.innerHTML = ""; 
+      boardsContainer.innerHTML = "";
       data.forEach((board) => {
         const boardLink = document.createElement("a");
         boardLink.className = "navbar-board";
@@ -698,7 +850,6 @@ function updateBoardList() {
     .catch((error) => console.error("Error fetching boards:", error));
 }
 
-
 document
   .getElementById("grant-access-form")
   .addEventListener("submit", function (event) {
@@ -706,8 +857,8 @@ document
     const userEmail = document.getElementById("user-to-grant").value;
     const boardId = document.body.getAttribute("board-id");
 
-    console.log("Grant Access - Board ID:", boardId); // Debug 
-    console.log("Grant Access - Email:", userEmail); // Debug 
+    console.log("Grant Access - Board ID:", boardId); // Debug
+    console.log("Grant Access - Email:", userEmail); // Debug
 
     fetch("/boards/share", {
       method: "POST",
@@ -731,10 +882,9 @@ document
       .catch((error) => console.error("Error granting access:", error));
   });
 
-
 function grantAccess(username) {
   const boardId = document.body.getAttribute("board-id");
-  const url = `/boards/share`; 
+  const url = `/boards/share`;
 
   fetch(url, {
     method: "POST",
@@ -753,7 +903,7 @@ function grantAccess(username) {
       }
     })
     .catch((error) => console.error("Error granting access:", error));
-};
+}
 
 document.addEventListener("DOMContentLoaded", function () {
   document.querySelectorAll(".sticky-note").forEach((note) => {

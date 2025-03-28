@@ -187,20 +187,30 @@ def unauthorized():
 @app.route('/notes/add', methods=['POST'])
 @login_required
 def add_note():
-    content = request.form['content']
-    color = request.form.get('color', '#ffffff')
-    board_id = session.get('active_board_id', None)  # Get the active board ID from session
-
+    content = request.form.get('content')
+    color = request.form.get('color')
+    board_id = session.get('active_board_id')
+    
     if not board_id:
-        return jsonify({'success': False, 'message': 'No active board selected.'}), 400
-
-    if content:
-        note = Note(content=content, color=color, user_id=current_user.id, board_id=board_id)
-        db.session.add(note)
-        db.session.commit()
-        return jsonify({'success': True, 'message': 'Note added successfully!', 'id': note.id}), 200
-    else:
-        return jsonify({'success': False, 'message': 'Note content cannot be empty.'}), 400
+        return jsonify({"error": "No active board selected"}), 400
+        
+    new_note = Note(
+        content=content,
+        color=color,
+        user_id=current_user.id,
+        board_id=board_id
+    )
+    
+    db.session.add(new_note)
+    db.session.commit()
+    
+    # Return more complete data
+    return jsonify({
+        'id': new_note.id,
+        'content': new_note.content,
+        'color': new_note.color,
+        'created_at': new_note.created_at.strftime('%Y-%m-%d %H:%M:%S')
+    })
 
 @app.route('/notes')
 @login_required
@@ -558,3 +568,50 @@ def update_preferences():
         db.session.rollback()
         current_app.logger.error(f"Error updating preferences: {str(e)}")
         return jsonify({'success': False, 'message': str(e)}), 500
+
+@app.route('/notes/<int:note_id>', methods=['GET'])
+@login_required
+def get_note(note_id):
+    note = Note.query.get_or_404(note_id)
+    
+    # Check if user has access to this note
+    if note.user_id != current_user.id:
+        # Check if the note is on a board the user has access to
+        access = Access.query.filter_by(user_id=current_user.id, board_id=note.board_id).first()
+        if not access and note.board.owner_id != current_user.id:
+            return jsonify({"error": "Unauthorized"}), 403
+    
+    # Get user info for the note
+    user = User.query.get(note.user_id)
+    user_prefs = UserPreferences.query.filter_by(user_id=user.id).first()
+    
+    # Get replies
+    replies = Reply.query.filter_by(note_id=note.id).all()
+    replies_data = []
+    
+    for reply in replies:
+        reply_user = User.query.get(reply.user_id)
+        reply_user_prefs = UserPreferences.query.filter_by(user_id=reply_user.id).first()
+        
+        replies_data.append({
+            'id': reply.id,
+            'content': reply.content,
+            'timestamp': reply.created_at.strftime('%Y-%m-%d %H:%M:%S'),
+            'username': reply_user_prefs.username if reply_user_prefs else reply_user.email
+        })
+    
+    # Return complete note data
+    return jsonify({
+        'id': note.id,
+        'content': note.content,
+        'color': note.color,
+        'position_x': note.position_x,
+        'position_y': note.position_y,
+        'width': note.width,
+        'height': note.height,
+        'created_at': note.created_at.strftime('%Y-%m-%d %H:%M:%S'),
+        'user_id': note.user_id,
+        'user_name': user_prefs.username if user_prefs else user.email,
+        'user_photo': user_prefs.profile_picture if user_prefs and user_prefs.profile_picture else '/static/images/default-avatar.jpg',
+        'replies': replies_data
+    })
