@@ -117,12 +117,40 @@ def process_login(form):
         return None
 
 def register_user(form):
-    hashed_password = generate_password_hash(form.password.data)
-    new_user = User(email=form.email.data, password=hashed_password)
-    db.session.add(new_user)
-    db.session.commit()
-    flash('Account created successfully! Please log in.', 'alert-success')
-    return redirect(url_for('app.authentication'))
+    try:
+        # Create user
+        new_user = User(email=form.email.data, password=generate_password_hash(form.password.data))
+        db.session.add(new_user)
+        db.session.flush()  # Get the user ID without committing yet
+        
+        # Create default preferences
+        preferences = UserPreferences(user_id=new_user.id)
+        db.session.add(preferences)
+        
+        # Create default board
+        default_board = Board(title='Default Board', owner=new_user)
+        db.session.add(default_board)
+        
+        # Commit all changes to database
+        db.session.commit()
+        
+        # Log in the user automatically
+        login_user(new_user, remember=True)
+        
+        # Set active board in session
+        session['active_board_id'] = default_board.id
+        
+        # Flash success message
+        flash('Welcome to TaskHub! Your account has been created successfully.', 'alert-success')
+        
+        # Redirect to notes page instead of login
+        return redirect(url_for('app.notes'))
+        
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(f"Error during registration: {e}")
+        flash('Registration failed. Please try again.', 'alert-registerfail')
+        return None
 
 @app.route('/logout')
 @login_required
