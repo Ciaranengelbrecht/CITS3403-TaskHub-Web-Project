@@ -37,7 +37,7 @@ class UserPreferences(db.Model):
     enable_email_notif_own = db.Column(db.Boolean, default=False)
     enable_email_notif_star = db.Column(db.Boolean, default=False)
     privacy = db.Column(db.String(50), default='private')
-    profile_picture = db.Column(db.String(250))
+    profile_picture = db.Column(db.Text)  # Changed from String(250) to Text
     username = db.Column(db.String(150), default='Username')
     light_dark_mode = db.Column(db.Boolean, default=False)
     note_colour = db.Column(db.String(7), default='#7785cc')

@@ -515,3 +515,80 @@ document.addEventListener("DOMContentLoaded", function () {
       panelColorPicker.value;
   });
 });
+
+// Add this function to resize the image before upload
+function resizeImage(src, maxWidth, maxHeight, quality) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = function () {
+      let width = img.width;
+      let height = img.height;
+
+      // Calculate new dimensions
+      if (width > height) {
+        if (width > maxWidth) {
+          height = Math.round((height * maxWidth) / width);
+          width = maxWidth;
+        }
+      } else {
+        if (height > maxHeight) {
+          width = Math.round((width * maxHeight) / height);
+          height = maxHeight;
+        }
+      }
+
+      const canvas = document.createElement("canvas");
+      canvas.width = width;
+      canvas.height = height;
+
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(img, 0, 0, width, height);
+
+      // Convert to base64 with reduced quality
+      const dataUrl = canvas.toDataURL("image/jpeg", quality);
+      resolve(dataUrl);
+    };
+    img.onerror = reject;
+    img.src = src;
+  });
+}
+
+// Modify the file input change handler
+document.addEventListener("DOMContentLoaded", function () {
+  const fileInput = document.getElementById("profile-picture-input");
+
+  if (fileInput) {
+    fileInput.addEventListener("change", function (e) {
+      if (e.target.files && e.target.files[0]) {
+        const file = e.target.files[0];
+        const reader = new FileReader();
+
+        reader.onload = async function (e) {
+          try {
+            // Resize the image to max 300x300px with 0.7 quality
+            const resizedImage = await resizeImage(
+              e.target.result,
+              300,
+              300,
+              0.7
+            );
+            document.getElementById("profile-picture").src = resizedImage;
+
+            // Show the unsaved changes bar
+            const changesBar = document.getElementById(
+              "profile-unsaved-changes-bar"
+            );
+            if (changesBar) {
+              changesBar.classList.add("display");
+            }
+          } catch (error) {
+            console.error("Error processing image:", error);
+            alert("There was an error processing the image. Please try again.");
+          }
+        };
+
+        reader.readAsDataURL(file);
+      }
+    });
+  }
+});

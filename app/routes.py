@@ -135,7 +135,7 @@ def logout():
         logout_user()
         
         # Only flash a message if the user was actually logged in
-        if was_logged_in:
+        if (was_logged_in):
             flash('You have been logged out.', 'success')
         
         return redirect(url_for('app.authentication'))
@@ -510,6 +510,11 @@ def update_preferences():
         if 'profile_picture' in data and data['profile_picture']:
             # Make sure it's a valid data URL
             if data['profile_picture'].startswith('data:image'):
+                # Check the size of the base64 string
+                base64_size = len(data['profile_picture'])
+                if base64_size > 5000000:  # ~5MB limit
+                    return jsonify({'success': False, 'message': 'Image too large. Please use a smaller image.'}), 400
+                
                 user_prefs.profile_picture = data['profile_picture']
         
         # Save changes
@@ -517,5 +522,5 @@ def update_preferences():
         return jsonify({'success': True})
     except Exception as e:
         db.session.rollback()
-        app.logger.error(f"Error updating preferences: {str(e)}")
+        current_app.logger.error(f"Error updating preferences: {str(e)}")
         return jsonify({'success': False, 'message': str(e)}), 500
