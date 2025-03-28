@@ -489,6 +489,12 @@ def update_preferences():
     try:
         data = request.get_json()
         
+        # Debug what we received
+        current_app.logger.info(f"Received preference update: {str(data.keys() if data else 'None')}")
+        
+        if not data:
+            return jsonify({'success': False, 'message': 'No data received'}), 400
+            
         # Get the current user's preferences
         user_prefs = current_user.preferences
         if not user_prefs:

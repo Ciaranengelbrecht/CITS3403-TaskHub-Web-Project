@@ -308,6 +308,11 @@ document.addEventListener("DOMContentLoaded", function () {
       const lightDarkMode = document.getElementById("toggle-theme").checked;
       const noteColor = document.getElementById("note-colour-picker").value;
 
+      // Get CSRF token from meta tag
+      const csrfToken = document
+        .querySelector('meta[name="csrf-token"]')
+        .getAttribute("content");
+
       // Get profile picture if it exists
       let profilePicture = null;
       const profileImg = document.getElementById("profile-picture");
@@ -316,15 +321,25 @@ document.addEventListener("DOMContentLoaded", function () {
         profileImg.src &&
         !profileImg.src.endsWith("default-avatar.jpg")
       ) {
-        // Convert image to base64 if it's not the default image
         profilePicture = profileImg.src;
       }
+
+      // Log data before sending (for debugging)
+      console.log("Sending data:", {
+        username,
+        light_dark_mode: lightDarkMode,
+        note_colour: noteColor,
+        profile_picture: profilePicture
+          ? "Base64 data (length: " + profilePicture.length + ")"
+          : null,
+      });
 
       // Send the data to the server
       fetch("/update_preferences", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "X-CSRFToken": csrfToken, // Add CSRF token here
         },
         body: JSON.stringify({
           username: username,
@@ -333,7 +348,14 @@ document.addEventListener("DOMContentLoaded", function () {
           profile_picture: profilePicture,
         }),
       })
-        .then((response) => response.json())
+        .then((response) => {
+          if (!response.ok) {
+            return response.text().then((text) => {
+              throw new Error(`Server returned ${response.status}: ${text}`);
+            });
+          }
+          return response.json();
+        })
         .then((data) => {
           if (data.success) {
             changesBar.classList.remove("visible");
@@ -350,21 +372,7 @@ document.addEventListener("DOMContentLoaded", function () {
     } else {
       // Revert changes
       changesBar.classList.remove("visible");
-      // Reset profile picture if needed
-      if (changesBarId === "profile-unsaved-changes-bar") {
-        // Load current profile from server (optional)
-        fetch("/get_preferences")
-          .then((response) => response.json())
-          .then((data) => {
-            if (data.profile_picture) {
-              document.getElementById("profile-picture").src =
-                data.profile_picture;
-            } else {
-              document.getElementById("profile-picture").src =
-                "/static/images/default-avatar.jpg";
-            }
-          });
-      }
+      // Your revert code...
     }
   }
 
